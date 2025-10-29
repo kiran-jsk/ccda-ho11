@@ -1,24 +1,23 @@
--- Use window function to rank products by sales within each category
-WITH ranked_products AS (
-    SELECT 
+WITH category_rankings AS (
+    SELECT
         category,
         sku,
         style,
-        SUM(amount) AS total_sales,
-        SUM(qty) AS total_quantity,
-        ROW_NUMBER() OVER (PARTITION BY category ORDER BY SUM(amount) DESC) AS rank
+        SUM(amount) AS category_sales,
+        SUM(qty) AS units_sold,
+        ROW_NUMBER() OVER (PARTITION BY category ORDER BY SUM(amount) DESC) AS position_in_category
     FROM raw
     WHERE category IS NOT NULL AND sku IS NOT NULL
     GROUP BY category, sku, style
 )
-SELECT 
+SELECT
     category,
     sku,
     style,
-    total_sales,
-    total_quantity,
-    rank
-FROM ranked_products
-WHERE rank <= 3
-ORDER BY category, rank
+    category_sales,
+    units_sold,
+    position_in_category
+FROM category_rankings
+WHERE position_in_category <= 3
+ORDER BY category, position_in_category
 LIMIT 10;

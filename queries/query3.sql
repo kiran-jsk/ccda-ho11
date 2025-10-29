@@ -1,19 +1,21 @@
--- Analyze impact of promotions on sales amount by category
-SELECT 
+WITH promo_flagged AS (
+    SELECT
+        category,
+        CASE
+            WHEN "promotion-ids" IS NULL OR "promotion-ids" = '' THEN 'No Promotion'
+            ELSE 'Promotion Applied'
+        END AS promo_group,
+        amount
+    FROM raw
+    WHERE category IS NOT NULL
+)
+SELECT
     category,
-    CASE 
-        WHEN "promotion-ids" IS NULL OR "promotion-ids" = '' THEN 'No Promotion'
-        ELSE 'With Promotion'
-    END AS promotion_status,
-    COUNT(*) AS order_count,
-    ROUND(AVG(amount), 2) AS avg_order_amount,
-    ROUND(SUM(amount), 2) AS total_sales
-FROM raw
-WHERE category IS NOT NULL
-GROUP BY category, 
-    CASE 
-        WHEN "promotion-ids" IS NULL OR "promotion-ids" = '' THEN 'No Promotion'
-        ELSE 'With Promotion'
-    END
-ORDER BY category, promotion_status
+    promo_group,
+    COUNT(*) AS orders_placed,
+    ROUND(AVG(amount), 2) AS mean_ticket,
+    ROUND(SUM(amount), 2) AS gross_sales
+FROM promo_flagged
+GROUP BY category, promo_group
+ORDER BY category, promo_group
 LIMIT 10;
